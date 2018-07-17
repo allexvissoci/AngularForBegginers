@@ -19,19 +19,21 @@ app.config(function($routeProvider){
   })
 });
 
-app.service("GroceryService", function(){
+app.service("GroceryService", function($http){
   var groceryService = {};
 
-  groceryService.groceryItems = [
-    {id: 1, completed: true, itemName: "milk", date: new Date("October 1, 2014 11:13:00")},
-    {id: 2, completed: true, itemName: "coockies", date: new Date("October 1, 2014 11:13:00")},
-    {id: 3, completed: true, itemName: "ice cream", date: new Date("October 2, 2014 11:13:00")},
-    {id: 4, completed: true, itemName: "potatoes", date: new Date("October 2, 2014 11:13:00")},
-    {id: 5, completed: true, itemName: "cereal", date: new Date("October 3, 2014 11:13:00")},
-    {id: 6, completed: true, itemName: "bread", date: new Date("October 3, 2014 11:13:00")},
-    {id: 7, completed: true, itemName: "eggs", date: new Date("October 4, 2014 11:13:00")},
-    {id: 8, completed: true, itemName: "tortillas", date: new Date("October 5, 2014 11:13:00")}
-  ];
+  groceryService.groceryItems = [];
+
+  $http.get("data/server_data.json")
+    .then(function (response) {
+      groceryService.groceryItems = response.data;
+
+      for(var item in groceryService.groceryItems){
+        groceryService.groceryItems[item].date = new Date(groceryService.groceryItems[item].date);
+      }
+    }, function(error) {
+        alert("Thigs went wrong");
+    });
 
   groceryService.findById = function(id){
     for(var item in groceryService.groceryItems){
@@ -41,20 +43,32 @@ app.service("GroceryService", function(){
     }
   };
 
-  groceryService.getNewId = function(){
-    if(groceryService.newId){
-      groceryService.newId++;
-      return groceryService.newId;
-    }else{
-      var maxId = _.max(groceryService.groceryItems, function(entry){ return entry.id; })
-      groceryService.newId = maxId.id + 1;
-      return groceryService.newId;
-    }
-  }
+  // groceryService.getNewId = function(){
+  //   if(groceryService.newId){
+  //     groceryService.newId++;
+  //     return groceryService.newId;
+  //   }else{
+  //     var maxId = _.max(groceryService.groceryItems, function(entry){ return entry.id; })
+  //     groceryService.newId = maxId.id + 1;
+  //     return groceryService.newId;
+  //   }
+  // }
 
   groceryService.removeItem = function(entry){
-    var index = groceryService.groceryItems.indexOf(entry);
-    groceryService.groceryItems.splice(index, 1);
+
+    $http.post("data/deleted_item.json", {id: entry.id})
+      .then(function(response){
+
+        if(response.data.status == 1){
+          var index = groceryService.groceryItems.indexOf(entry);
+          groceryService.groceryItems.splice(index, 1);
+        }
+
+      }, function(error) {
+          alert("Thigs went wrong");
+      });
+
+
   }
 
   groceryService.markCompleted = function(entry){
@@ -65,11 +79,30 @@ app.service("GroceryService", function(){
 
     var updatedItem = groceryService.findById(entry.id);
     if(updatedItem){
-      updatedItem.completed = entry.completed;
-      updatedItem.itemName = entry.itemName;
-      updatedItem.date = entry.date;
+
+      $http.post("data/updated_item.json", entry)
+        .then(function(response){
+
+          if(response.data.status == 1){
+            updatedItem.completed = entry.completed;
+            updatedItem.itemName = entry.itemName;
+            updatedItem.date = entry.date;
+          }
+
+        }, function(error) {
+            alert("Thigs went wrong");
+        });
+
+
     }else{
-      entry.id = groceryService.getNewId();
+
+      $http.post("data/added_item.json", entry)
+        .then(function(response){
+          entry.id = response.data.id;
+        }, function(error) {
+            alert("Thigs went wrong");
+        });
+
       groceryService.groceryItems.push(entry);
     }
   };
@@ -87,12 +120,16 @@ app.controller("HomeController", ["$scope", "GroceryService", function($scope, G
   $scope.markCompleted = function(entry){
     GroceryService.markCompleted(entry);
   }
+
+  $scope.$watch(function(){return GroceryService.groceryItems;}, function(groceryItems){
+    $scope.groceryItems = groceryItems;
+  })
 }]);
 
 app.controller("GroceryListItemController", ["$scope", "$routeParams",  "$location", "GroceryService", function($scope, $routeParams, $location, GroceryService){
 
   if(!$routeParams.id){
-    $scope.groceryItem = { id:0, completed:true, itemName:"", date: new Date()}
+    $scope.groceryItem = { id:0, completed:false, itemName:"", date: new Date()}
   }else{
     $scope.groceryItem = _.clone(GroceryService.findById(parseInt($routeParams.id)));
   }
@@ -101,6 +138,8 @@ app.controller("GroceryListItemController", ["$scope", "$routeParams",  "$locati
     GroceryService.save($scope.groceryItem);
     $location.path("/");
   }
+
+  console.log($scope.groceryItems);
 
 }]);
 
