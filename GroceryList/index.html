@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html ng-app="groceryListApp">
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE-edge" />
+    <title>Tutorial 2</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  </head>
+  <body ng-controller="HomeController">
+
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a href="#" class="navbar-brand">
+            <span class="glyphicon glyphicon-apple" style="color:#5bdb48"></span>
+            {{appTitle}}
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" ng-view>
+
+    </div>
+
+    <!-- Jquery -->
+    <script type="text/javascript" src="lib/jquery-3.3.1.min.js"></script>
+
+    <!-- Bootstrap -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+    <!-- Angular -->
+    <script type="text/javascript" src="lib/angular.min.js"></script>
+    <script type="text/javascript" src="lib/angular-route.min.js"></script>
+    <script type="text/javascript" src="js/apps.js"></script>
+  </body>
+</html>
